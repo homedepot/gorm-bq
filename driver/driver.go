@@ -21,15 +21,16 @@ type bigQueryConfig struct {
 	scopes      []string
 	endpoint    string
 	disableAuth bool
+	credentials []byte
 }
 
-func (b bigQueryDriver) Open(uri string) (driver.Conn, error) {
+func (b bigQueryDriver) Open(uri string, credentials []byte) (driver.Conn, error) {
 
 	if uri == "scanner" {
 		return &scannerConnection{}, nil
 	}
 
-	config, err := configFromUri(uri)
+	config, err := configFromUri(uri, credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +43,9 @@ func (b bigQueryDriver) Open(uri string) (driver.Conn, error) {
 	}
 	if config.disableAuth {
 		opts = append(opts, option.WithoutAuthentication())
+	}
+	if config.credentials != nil {
+		opts = append(opts, option.WithCredentialsJSON(config.credentials))
 	}
 
 	client, err := bigquery.NewClient(ctx, config.projectID, opts...)
@@ -56,7 +60,7 @@ func (b bigQueryDriver) Open(uri string) (driver.Conn, error) {
 	}, nil
 }
 
-func configFromUri(uri string) (*bigQueryConfig, error) {
+func configFromUri(uri string, credentials []byte) (*bigQueryConfig, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, invalidConnectionStringError(uri)
@@ -81,6 +85,7 @@ func configFromUri(uri string) (*bigQueryConfig, error) {
 		scopes:      getScopes(u.Query()),
 		endpoint:    u.Query().Get("endpoint"),
 		disableAuth: u.Query().Get("disable_auth") == "true",
+		credentials: credentials,
 	}
 
 	if len(fields) == 2 {
