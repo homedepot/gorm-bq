@@ -3,6 +3,7 @@ package driver
 import (
 	"context"
 	"database/sql/driver"
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"strings"
@@ -24,13 +25,13 @@ type bigQueryConfig struct {
 	credentials []byte
 }
 
-func (b bigQueryDriver) Open(uri string, credentials []byte) (driver.Conn, error) {
+func (b bigQueryDriver) Open(uri string) (driver.Conn, error) {
 
 	if uri == "scanner" {
 		return &scannerConnection{}, nil
 	}
 
-	config, err := configFromUri(uri, credentials)
+	config, err := configFromUri(uri)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func (b bigQueryDriver) Open(uri string, credentials []byte) (driver.Conn, error
 	}, nil
 }
 
-func configFromUri(uri string, credentials []byte) (*bigQueryConfig, error) {
+func configFromUri(uri string) (*bigQueryConfig, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, invalidConnectionStringError(uri)
@@ -75,17 +76,28 @@ func configFromUri(uri string, credentials []byte) (*bigQueryConfig, error) {
 	}
 
 	fields := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
-	if len(fields) > 2 {
+	if len(fields) > 3 {
 		return nil, invalidConnectionStringError(uri)
+	}
+	var decodedCerts []byte
+	if len(fields) == 2 {
+		//convert base64 encoded string to json byte array
+		encCerts := fields[len(fields)-1]
+		decodedCert, err := base64.StdEncoding.DecodeString(encCerts)
+		if err != nil {
+			return nil, fmt.Errorf("invalid cert provided, expected bigquery://projectid/dataset/base64Cert got: %s", uri)
+		}
+		decodedCerts = decodedCert
+
 	}
 
 	config := &bigQueryConfig{
 		projectID:   u.Hostname(),
-		dataSet:     fields[len(fields)-1],
+		dataSet:     fields[len(fields)-2],
 		scopes:      getScopes(u.Query()),
 		endpoint:    u.Query().Get("endpoint"),
 		disableAuth: u.Query().Get("disable_auth") == "true",
-		credentials: credentials,
+		credentials: decodedCerts,
 	}
 
 	if len(fields) == 2 {
