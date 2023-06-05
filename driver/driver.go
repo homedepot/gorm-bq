@@ -85,7 +85,7 @@ func configFromUri(uri string) (*bigQueryConfig, error) {
 		encCerts := fields[len(fields)-1]
 		decodedCert, err := base64.StdEncoding.DecodeString(encCerts)
 		if err != nil {
-			return nil, fmt.Errorf("invalid cert provided, expected bigquery://projectid/dataset/base64Cert got: %s", uri)
+			return nil, fmt.Errorf("invalid cert provided, expected bigquery://projectid/dataset/base64Cert , error : %s ", err)
 		}
 		decodedCerts = decodedCert
 
