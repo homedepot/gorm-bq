@@ -1,10 +1,11 @@
 package driver
 
 import (
-	"cloud.google.com/go/bigquery"
 	"errors"
-	"gorm.io/driver/bigquery/adaptor"
 	"io"
+
+	"cloud.google.com/go/bigquery"
+	"github.com/homedepot/gorm-bq/adaptor"
 )
 
 type bigQuerySource interface {
@@ -15,8 +16,8 @@ type bigQuerySource interface {
 type bigQueryRowIteratorSource struct {
 	iterator      *bigquery.RowIterator
 	schemaAdaptor adaptor.SchemaAdaptor
-	prevValues []bigquery.Value
-	prevError error
+	prevValues    []bigquery.Value
+	prevError     error
 }
 
 func (source *bigQueryRowIteratorSource) GetSchema() bigQuerySchema {

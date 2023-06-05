@@ -1,12 +1,13 @@
 package driver
 
 import (
-	"cloud.google.com/go/bigquery"
 	"context"
 	"database/sql/driver"
 	"errors"
+
+	"cloud.google.com/go/bigquery"
+	"github.com/homedepot/gorm-bq/adaptor"
 	"github.com/sirupsen/logrus"
-	"gorm.io/driver/bigquery/adaptor"
 )
 
 type bigQueryStatement struct {

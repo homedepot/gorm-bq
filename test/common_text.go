@@ -1,11 +1,12 @@
 package test
 
 import (
+	"log"
+
+	bigquery "github.com/homedepot/gorm-bq"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/driver/bigquery"
 	"gorm.io/gorm"
-	"log"
 )
 
 type GormTestSuite struct {
